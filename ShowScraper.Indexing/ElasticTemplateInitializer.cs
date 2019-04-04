@@ -5,13 +5,13 @@ using ShowScraper.TvMazeClient.Models;
 
 namespace ShowScraper.Indexer
 {
-    public class CreateIndexTemplateIfNeeded
+    public class ElasticTemplateInitializer
     {
         readonly IElasticClient _client;
 
-        public CreateIndexTemplateIfNeeded(IElasticClient elasticClient)
+        public ElasticTemplateInitializer(IElasticClient elasticClient)
         {
-            _client = elasticClient;
+            _client = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
         }
         
         /// <summary>
@@ -29,8 +29,8 @@ namespace ShowScraper.Indexer
             {
                 if (createIndexResponse.ServerError.Status == 400) // resource_already_exists
                     return;
-                throw new Exception($"Error saving index: {createIndexResponse.ServerError.Error}");
 
+                throw new Exception($"Error saving index: {createIndexResponse.ServerError.Error}");
             }
         }
     }

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
-namespace ShowScraper.Api.Controllers.v1
+namespace ShowScraper.Api.Models
 {
     public class ShowModel
     {
         public string id { get; set; }
         public string name { get; set; }
-        public IEnumerable<CastModel> cast { get; set; }
+        public IList<CastModel> cast { get; set; }
     }
 }

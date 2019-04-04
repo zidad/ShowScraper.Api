@@ -1,4 +1,4 @@
-﻿namespace ShowScraper.Api.Controllers.v1
+﻿namespace ShowScraper.Api.Models
 {
     public class CastModel
     {

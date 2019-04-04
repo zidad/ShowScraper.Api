@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Elasticsearch.Net;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Nest;
 using ShowScraper.TvMazeClient;
 using ShowScraper.TvMazeClient.Models;
@@ -36,9 +29,9 @@ namespace ShowScraper.Api
                 options.DescribeStringEnumsInCamelCase();
                 options.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
                 {
-                    Title = "HTTP API",
+                    Title = "Shows Caching API",
                     Version = "v1",
-                    Description = "The Service HTTP API"
+                    Description = "Return shows with their cast members, in order of their birthday"
                 });
             });
 
@@ -46,7 +39,7 @@ namespace ShowScraper.Api
 
             services.AddScoped<IElasticClient>(_ =>
             {
-                var node = new Uri("http://localhost:9200");
+                var node = new Uri(Configuration["ELASTICSEARCH_HOST"] ?? "http://localhost:9200");
             
                 var connectionPool = new SniffingConnectionPool(new[] {node}) {SniffedOnStartup = true };
             

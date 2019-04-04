@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
@@ -14,6 +13,7 @@ namespace ShowScraper.Indexer
 {
     class Program
     {
+        // please make sure docker-compose is running Elastic
         static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
@@ -23,12 +23,22 @@ namespace ShowScraper.Indexer
             var configBuilder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
+                .AddCommandLine(args)
                 .AddEnvironmentVariables();
 
-            Configuration = configBuilder.Build();
-        
+            var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
+            using (var provider = ConfigureServices(services))
+            {
+                var scraper = provider.GetService<ShowScraper>();
+
+                await scraper.StartScraping(configuration);
+            }
+        }
+
+        static ServiceProvider ConfigureServices(ServiceCollection services)
+        {
             services
                 .AddHttpClient<TvMazeService>()
                 .AddPolicyHandler(TvMazeService.RetryAfterIncreasingDelayOnTooManyRequests);
@@ -38,9 +48,9 @@ namespace ShowScraper.Indexer
             services.AddScoped<IElasticClient>(_ =>
             {
                 var node = new Uri("http://localhost:9200");
-            
-                var connectionPool = new SniffingConnectionPool(new[] {node}) {SniffedOnStartup = true };
-            
+
+                var connectionPool = new SniffingConnectionPool(new[] {node}) {SniffedOnStartup = true};
+
                 var connectionSettingsValues = new ConnectionSettings(connectionPool)
                     .DefaultMappingFor<ShowWithCast>(s => s.IndexName(nameof(ShowWithCast).ToLowerInvariant()));
 
@@ -49,30 +59,15 @@ namespace ShowScraper.Indexer
 
             services.AddTransient<ShowsWithCastEnricher>();
             services.AddTransient<ShowsElasticIndexer>();
-            services.AddTransient<CreateIndexTemplateIfNeeded>();
+            services.AddTransient<ElasticTemplateInitializer>();
+            services.AddTransient<ShowScraper>();
 
             var provider = services.BuildServiceProvider();
 
-            var templateCreator = provider.GetService<CreateIndexTemplateIfNeeded>();
-            await templateCreator.CreateIndexTemplate();
-
-            var reader = provider.GetService<ShowsWithCastEnricher>();
-            var indexer = provider.GetService<ShowsElasticIndexer>();
-
-            bool hasMore = true;
-            int page  = 0;
-
-            while(hasMore)
-            {
-                var shows = (await reader.ReadShowsAsync(page++)).ToImmutableList();
-
-                await indexer.SaveShowsAsync(shows);
-
-                hasMore = shows.Count > 0;
-            }
+            return provider;
         }
 
-        public static IConfigurationRoot Configuration { get; set; }
     }
+
 
 }

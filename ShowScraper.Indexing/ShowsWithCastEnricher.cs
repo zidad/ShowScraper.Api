@@ -8,7 +8,7 @@ using ShowScraper.TvMazeClient.Models;
 namespace ShowScraper.Indexer
 {
     /// <summary>
-    /// enriches the TV shows with cast information from the API
+    /// Enriches the TV shows with cast information from the API
     /// </summary>
     public class ShowsWithCastEnricher
     {
@@ -27,12 +27,11 @@ namespace ShowScraper.Indexer
 
             foreach (var show in shows)
             {
-                _logger.Information(show.name);
+                _logger.Information("Page {page}: Enriching show {showid} {showname}", startPage, show?.id, show?.name);
                 showsWithCast.Add(await _service.GetShowWithCast(show.id));
             }
 
             return showsWithCast;
         }
-
     }
 }
