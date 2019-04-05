@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Serilog;
 using ShowScraper.TvMazeClient;
 using ShowScraper.TvMazeClient.Models;
@@ -23,12 +25,20 @@ namespace ShowScraper.Indexer
         public async Task<IList<ShowWithCast>> ReadShowsAsync(int startPage)
         {
             var shows = (await _service.GetShows(startPage)).ToImmutableList();
+
             IList<ShowWithCast> showsWithCast = new List<ShowWithCast>();
 
             foreach (var show in shows)
             {
                 _logger.Information("Page {page}: Enriching show {showid} {showname}", startPage, show?.id, show?.name);
-                showsWithCast.Add(await _service.GetShowWithCast(show.id));
+                try
+                {
+                    showsWithCast.Add(await _service.GetShowWithCast(show.id));
+                }
+                catch (JsonReaderException  e)
+                {
+                    _logger.Error(e, "Unable to parse show with cast, skipping");
+                }
             }
 
             return showsWithCast;

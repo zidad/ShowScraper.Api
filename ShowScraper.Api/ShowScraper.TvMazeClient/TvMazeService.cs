@@ -4,14 +4,18 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Polly;
 using Polly.Extensions.Http;
+using Serilog;
 using ShowScraper.TvMazeClient.Models;
 
 namespace ShowScraper.TvMazeClient
 {
     public class TvMazeService
     {
+        ILogger logger = Log.Logger.ForContext<TvMazeService>();
+
         public HttpClient Client { get; }
 
         public TvMazeService(HttpClient client)
